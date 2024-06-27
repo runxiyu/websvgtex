@@ -37,11 +37,18 @@ cat >>m.tex <<EOF
 \end{document}
 EOF
 
+if [ -z "$1" ]
+then
+	export_filename="m.svg"
+else
+	export_filename="$1"
+fi
+
 { set -x; } 2>/dev/null
 
 ensure latex m.tex
 ensure latex m.tex
 ensure dvips m.dvi
-ensure inkscape m.ps --export-plain-svg --export-filename=m.svg
+ensure inkscape m.ps --export-plain-svg --export-filename="$export_filename"
 
-ensure mv m.svg "$opwd"
+ensure mv "$export_filename" "$opwd"
