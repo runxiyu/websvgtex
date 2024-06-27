@@ -1,0 +1,47 @@
+#!/bin/sh
+
+err() {
+	{ set +x; } 2>/dev/null
+	echo "$@" >&2
+	exit 1
+}
+
+ensure_noset() {  
+        [ $# -lt 1 ] && return 0
+	$@ || err failed executing: "$@"
+}
+
+ensure() {  
+	{ set +x; } 2>/dev/null
+        [ $# -lt 1 ] && return 0
+	$@ || err failed executing: "$@"
+	{ set -x; } 2>/dev/null
+}
+
+rxrand="$(base64 < /dev/random | tr -d '/+=' | head -c 10)"
+
+opwd="$(pwd)"
+
+ensure_noset mkdir /tmp/websvgtex-$rxrand
+ensure_noset cd /tmp/websvgtex-$rxrand
+
+cat >m.tex <<EOF
+\documentclass[preview]{standalone}
+\usepackage{amsmath}
+\begin{document}
+EOF
+
+cat /dev/stdin >>m.tex
+
+cat >>m.tex <<EOF
+\end{document}
+EOF
+
+{ set -x; } 2>/dev/null
+
+ensure latex m.tex
+ensure latex m.tex
+ensure dvips m.dvi
+ensure inkscape m.ps --export-plain-svg --export-filename=m.svg
+
+ensure mv m.svg "$opwd"
